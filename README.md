@@ -1,5 +1,7 @@
 # Oyster
 
+#### Version Alpha 0.0.0
+
 > An extensible Scheme library to execute Scheme as a Shell script
 
 
@@ -26,3 +28,11 @@ Would become
 ```
 
 Where the `shuck` function would understand the command `ls` and provide a result that would be made out of a list of string, each one being a directory / file in my home folder.
+
+# Design Goals
+
+# Getting Started
+
+# Configuration
+
+# Roadmap
