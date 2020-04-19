@@ -6,7 +6,7 @@
 
 
 
-I hate writing shell scripts, but I have too. However, I love writing Scheme. It's 2020 and I should'nthave to suffer this much. Oyster is a Scheme library that allows one to write Scheme scripts that can call programs found in the path.
+I hate writing shell scripts, but I have too. However, I love writing Scheme. It's 2020 and I should not have to suffer this much. Oyster is a Scheme library that allows one to write Scheme scripts that can call programs found in the path.
 
 The idea is fairly simple; instead of using a normal `define`, I use `define-shell` which will parse the code and find commands that would be programs. For instance,
 
