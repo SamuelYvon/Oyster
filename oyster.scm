@@ -33,6 +33,8 @@
    ; List of functions that can be called
    (define oysters (make-table))
 
+   (define default-knife butter-knife)
+
    ; ----------------------------------------------------------------------
    ; ----------------------------------------------------------------------
    ;                                  Utils
@@ -89,10 +91,11 @@
    ; Default shucking tool, args as string and command as symbol
    (define (butter-knife command . args)
     (let ((all (cons (symbol->string command) args)))
-     (cdr (shell-command (string-join all #\space) #t))))
+     (lines->list
+       (cdr (shell-command (string-join all #\space) #t)))))
 
    (define (shuck command . args)
-    (apply (table-ref shucking-knifes command butter-knife) command args))
+    (apply (table-ref shucking-knifes command default-knife) command args))
 
    (define (cold-bath command)
     (lambda args (apply shuck (cons command args))))
@@ -119,6 +122,33 @@
       (table-set! oysters (string->symbol prog) #t))
      (directory-files path)))
 
+   ; ----------------------------------------------------------------------
+   ; ----------------------------------------------------------------------
+   ;                            Exported Macros
+   ; ----------------------------------------------------------------------
+   ; ----------------------------------------------------------------------
+
+   (define-macro
+    (define-shell signature body)
+    ; Find a way to get the edible? call working...
+    ; Macros are not always fun
+    (letrec ((dive
+               (lambda (body)
+                 (if (not (pair? body))
+                     (if (edible? body)
+                         (list 'cold-bath `(string->symbol ,(symbol->string body)))
+                         body)
+                     (let ((head (car body))
+                           (rest (cdr body)))
+                       (if (edible? head)
+                           (cons 'shuck (cons `(string->symbol ,(symbol->string head)) (map dive rest)))
+                           (cons head (map dive rest))))
+                     ))))
+      `(define
+         ,signature
+         ,(dive body)
+         )))
+
    ; Replace a knife for a lexical block
    ; (define-macro (with-knife command knife thunk)
    ;  (let ((r (gensym)))
@@ -137,39 +167,6 @@
    ;                 (zip commands knifes)))
    ;        ,thunk
    ;        ))
-
-   ; (define (load-path)
-
-   ;  )
-
-   ; (define (load-knifes)
-
-   ; )
-
-   ; ----------------------------------------------------------------------
-   ; ----------------------------------------------------------------------
-   ;                            Exported Macros
-   ; ----------------------------------------------------------------------
-   ; ----------------------------------------------------------------------
-
-  (define-macro
-    (define-shell signature body)
-    (letrec ((dive
-               (lambda (body)
-                 (if (not (pair? body))
-                     (if (edible? body)
-                         (list 'cold-bath `(string->symbol ,(symbol->string body)))
-                         body)
-                     (let ((head (car body))
-                           (rest (cdr body)))
-                       (if (edible? head)
-                           (cons 'shuck (cons `(string->symbol ,(symbol->string head)) (map dive rest)))
-                           (cons head (map dive rest))))
-                     ))))
-      `(define
-         ,signature
-         ,(dive body)
-         )))
 
    ; Load the config file at the end, so it can
    ; access all of the previously defined routines
