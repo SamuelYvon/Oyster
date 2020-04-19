@@ -31,6 +31,22 @@ Where the `shuck` function would understand the command `ls` and provide a resul
 
 This library allows you to avoid the horrible shell syntax and still have a natural access to the programs provided by your operating system.
 
+For instance, if you wanted to perform `ls` on all the files in your home folder, you could do
+
+```Scheme
+(import (oyster))
+
+(map ls (directory-files "~"))
+```
+
+Of course, you might want to pass more arguments to ls, which you can do using the `partial` method provided:
+
+```Scheme
+(import (oyster))
+
+(map (partial ls "-al") (directory-files "~"))
+```
+
 ## Design Goals
 
 ## Getting Started
