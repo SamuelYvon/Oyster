@@ -30,7 +30,6 @@
    ; List of directories where functions can be found
    (define reefs '())
 
-
    ; List of functions that can be called
    (define oysters (make-table))
 
@@ -96,11 +95,10 @@
     (apply (table-ref shucking-knifes command butter-knife) command args))
 
    (define (cold-bath command)
-    (lambda args
-      (apply shuck (cons command args))))
+    (lambda args (apply shuck (cons command args))))
 
    (define (edible? sym)
-    (eq? sym 'ls))
+    (table-ref oysters sym #f))
 
    (define (define-shuck-knife command knife)
     (table-set! shucks-knifes command knife))
@@ -108,12 +106,18 @@
    (define (undef-shuck-knife command)
      (table-set! shucks-knifes command))
 
+   ; Add a path as a reef, a source of programs that can
+   ; and should be translated to calls to shell
    (define (add-reef path)
     (set! reefs (cons path reefs))
     (explore path))
 
+   ; Add all programs to the list
    (define (explore path)
-    (directory-files path))
+    (for-each
+     (lambda (prog)
+      (table-set! oysters (string->symbol prog) #t))
+     (directory-files path)))
 
    ; Replace a knife for a lexical block
    ; (define-macro (with-knife command knife thunk)
