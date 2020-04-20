@@ -4,8 +4,7 @@
 (define-library
   (oyster)
   (import (gambit))
-  (export
-    define-shuck-knife ; define a handler for parsing commands
+  (export define-shuck-knife ; define a handler for parsing commands
     butter-knife
     with-knife
     with-knifes
@@ -33,8 +32,7 @@
    ; List of functions that can be called
    (define oysters (make-table))
 
-   (define default-knife butter-knife)
-
+   ; (define default-knife butter-knife)
    ; ----------------------------------------------------------------------
    ; ----------------------------------------------------------------------
    ;                                  Utils
@@ -94,6 +92,8 @@
      (lines->list
        (cdr (shell-command (string-join all #\space) #t)))))
 
+   (define default-knife butter-knife)
+
    (define (shuck command . args)
     (apply (table-ref shucking-knifes command default-knife) command args))
 
@@ -130,17 +130,18 @@
 
    (define-macro
     (define-shell signature body)
+    ; (export edible?)
     ; Find a way to get the edible? call working...
     ; Macros are not always fun
     (letrec ((dive
                (lambda (body)
                  (if (not (pair? body))
-                     (if (edible? body)
+                     (if (oyster#edible? body)
                          (list 'cold-bath `(string->symbol ,(symbol->string body)))
                          body)
                      (let ((head (car body))
                            (rest (cdr body)))
-                       (if (edible? head)
+                       (if (oyster#edible? head)
                            (cons 'shuck (cons `(string->symbol ,(symbol->string head)) (map dive rest)))
                            (cons head (map dive rest))))
                      ))))
