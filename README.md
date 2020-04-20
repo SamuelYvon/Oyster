@@ -4,7 +4,7 @@
 
 #### Version Alpha 0.0.0
 
-
+__ATTENTION__ Since this is in Alpha, the API might change from version to version!
 
 I hate writing shell scripts, but I have too. However, I love writing Scheme. It's 2020 and I should not have to suffer this much. Oyster is a Scheme library that allows one to write Scheme scripts that can call programs found in the path.
 
@@ -47,10 +47,70 @@ Of course, you might want to pass more arguments to ls, which you can do using t
 (map (partial ls "-al") (directory-files "~"))
 ```
 
-## Design Goals
+## Usage
+
+Oyster is a Scheme library for Gambit. Therefore, you will be able to use it by creating Scheme files that will be run from the `gsi` (or `gsc`) programs.
+
+Those scripts will require you to include the library:
+
+```Scheme
+#!/usr/local/Gambit/bin/gsi
+(import (oyster))
+
+; Your script here!
+```
+
+The majority of what you need should be covered by the `define-shell` and `->>` macros. The `define-shell` macro allows you to define Scheme functions, where the identifiers that represents programs found in your path will be transformed into calls to the programs themselves. For instance,
+
+```Scheme
+#!/usr/local/Gambit/bin/gsi
+(import (oyster))
+
+(define-shell (example)
+ (ls "-a"))
+
+(example)
+```
+Will produce something akin to (if called from ~)
+
+```Scheme
+("total 26"
+"drwxr-xr-x  4 syvon syvon 4096 Apr 20 10:44 Desktop"
+"drwxr-xr-x 24 syvon syvon 4096 Apr 19 13:26 Documents"
+"drwxr-xr-x  2 syvon syvon 4096 Apr 19 21:47 Downloads"
+"drwxr-xr-x  2 syvon syvon 4096 Feb 25 21:55 Music"
+"drwxr-xr-x  2 syvon syvon 4096 Apr 18 18:51 Pictures"
+"drwxr-xr-x  2 syvon syvon 4096 Feb 25 21:55 Public"
+"drwxr-xr-x  2 syvon syvon 4096 Feb 25 21:55 Templates"
+"drwxr-xr-x  3 syvon syvon 4096 Apr 10 15:59 Videos")
+```
+
+The `->>` function, also called the force-feed function, will pipe commands together, and parse the result of the last command in the pipe chain. For instance,
+
+```Scheme
+(import (oyster))
+(->> (ls "-al")
+     (wc "-l"))
+```
+
+Will return the number of lines from the result of the "ls" call. Pipes are done sequentially. You do not need to execute the force-feed function from a `define-shell` function.
 
 ## Getting Started
 
+Oyster is designed for [Gambit Scheme](https://github.com/gambit/gambit). Therefore, using Oyster
+requires that you have Gambit installed and properly configured. Once you have Gambit installed somewhere (by default, `/usr/local/Gambit`), you can install the oyster library in your Gambit library folder by using the `install.sh` script:
+
+```Shell
+git clone https://github.com/SamuelYvon/Oyster
+cd Oyster
+chmod u+x install.sh
+./install.sh
+```
+
+If you decide to leave the default install library folder, it will install Oyster in Gambit's bundled libraries. You will need to run the `install.sh` script as root (`sudo ./install.sh`).
+
 ## Configuration
+
+The configuration file is loaded from `~/.oyster.scm`. A default configuration is provided in `default-config.scm`.
 
 ## Roadmap
