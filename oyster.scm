@@ -103,7 +103,7 @@
 
    ; Default shucking tool, simply transform the
    ; string into an array of lines
-   (define (butter-knife command str)
+   (define (butter-knife command args str)
      (lines->list str))
 
    (define (make-call command args)
@@ -121,14 +121,14 @@
 
    (define default-seasonner lime)
 
-   (define (shuck command str)
-    ((table-ref shucking-knifes command default-knife) command str))
+   (define (shuck command args str)
+    ((table-ref shucking-knifes command default-knife) command args str))
 
    (define (prepare command . args)
     (apply (table-ref seasonners command default-seasonner) command args))
 
    (define (eat command . args)
-    (shuck command (apply prepare command args)))
+    (shuck command args (apply prepare command args)))
 
    (define (cold-bath command)
     (lambda args (apply eat command args)))

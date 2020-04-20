@@ -60,6 +60,9 @@ Those scripts will require you to include the library:
 ; Your script here!
 ```
 
+
+### `define-shell`
+
 The majority of what you need should be covered by the `define-shell` and `->>` macros. The `define-shell` macro allows you to define Scheme functions, where the identifiers that represents programs found in your path will be transformed into calls to the programs themselves. For instance,
 
 ```Scheme
@@ -85,6 +88,8 @@ Will produce something akin to (if called from ~)
 "drwxr-xr-x  3 syvon syvon 4096 Apr 10 15:59 Videos")
 ```
 
+### `->>`
+
 The `->>` function, also called the force-feed function, will pipe commands together, and parse the result of the last command in the pipe chain. For instance,
 
 ```Scheme
@@ -94,6 +99,22 @@ The `->>` function, also called the force-feed function, will pipe commands toge
 ```
 
 Will return the number of lines from the result of the "ls" call. Pipes are done sequentially. You do not need to execute the force-feed function from a `define-shell` function.
+
+### Shucking-knifes
+
+Analysing the result of a command and transforming it into a Scheme result is called `shucking`. You can define `shuking-knifes`, functions responsible for parsing the result, in your `~/oyster.scm` config file. By default, shucking is done with the `butter-knife`, which only transform lines into an array of strings.
+
+One can define a specific shucking knife  for a function (for `ls in this case) this way:
+
+```Scheme
+
+   (define (knife command args result)
+           (do-stuff))
+
+   (define-shuck-knife 'ls knife)
+```
+
+The `knife` function receives the command symbol, the args the function was called with and the result string. The result of the knife is used directly as the return argument of the call.
 
 ## Getting Started
 
