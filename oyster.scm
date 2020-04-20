@@ -16,6 +16,7 @@
     shuck
     with-knife
     with-knifes
+    with-shell
     define-shuck-knife ; define a handler for parsing commands
     )
   (begin
@@ -201,6 +202,11 @@
    (define-macro
     (->> . functions)
      (oyster#pipe functions))
+
+   (define-macro
+     (with-shell . thunks)
+     `(begin
+        ,@(map oyster#dive thunks)))
 
    ; Load the config file at the end, so it can
    ; access all of the previously defined routines

@@ -2,7 +2,7 @@
 
 > An extensible Scheme library to execute Scheme as a Shell script
 
-#### Version Alpha 0.0.0
+#### Version Alpha 0.0.1
 
 __ATTENTION__ Since this is in Alpha, the API might change from version to version!
 
@@ -99,6 +99,12 @@ The `->>` function, also called the force-feed function, will pipe commands toge
 ```
 
 Will return the number of lines from the result of the "ls" call. Pipes are done sequentially. You do not need to execute the force-feed function from a `define-shell` function.
+
+### `with-shell`
+
+The `with-shell` function executes a block of code with shell expansion without using the `define-shell` command. You can use it for inline shell commands or a list of forms. It uses the same mecanisms but without creating a definition.
+
+`(with-shell thunks)`
 
 ### Shucking-knifes
 
