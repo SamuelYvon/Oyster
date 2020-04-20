@@ -9,6 +9,8 @@ if [[ "" == "$path" ]]; then
   path="/usr/local/Gambit/lib" 
 fi
 
+
+cp "./oyster-core.scm" "$path"
 cp "./oyster.scm" "$path"
 
 echo "Done :)"
