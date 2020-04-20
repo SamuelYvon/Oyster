@@ -4,15 +4,19 @@
 (define-library
   (oyster)
   (import (gambit))
-  (export define-shuck-knife ; define a handler for parsing commands
+  (export
+    ->>
+    add-reef
     butter-knife
+    cold-bath
+    define-shell
+    eat
+    edible?
+    prepare
+    shuck
     with-knife
     with-knifes
-    shuck
-    define-shell
-    cold-bath
-    add-reef
-    edible?
+    define-shuck-knife ; define a handler for parsing commands
     )
   (begin
    ; ----------------------------------------------------------------------
@@ -23,8 +27,13 @@
    (define explored? #f)
 
    ; Table of handlers to function of the form
-   ; symbol, (args) -> type
+   ; symbol, string -> scheme data
    (define shucking-knifes (make-table))
+
+   ; Table of handler functions to prepare and execute a command call
+   ; A function is in the form of
+   ; symbol, strings -> string
+   (define seasonners (make-table))
 
    ; List of directories where functions can be found
    (define reefs '())
@@ -53,7 +62,10 @@
                     (string sep)
                     sep)))
        (foldr
-         (lambda (e r) (string-append e sep r))
+         (lambda (e r)
+          (if (string=? r "")
+           e
+           (string-append e sep r)))
          ""
          strs
          )))
@@ -80,25 +92,46 @@
    (define (filter p l)
     (foldr (lambda (e r) (if (p e) (cons e r) r)) '() l))
 
+   (define (macro-sym-to-rt-sym sym)
+    `(string->symbol ,(symbol->string sym)))
+
    ; ----------------------------------------------------------------------
    ; ----------------------------------------------------------------------
    ;                                  Core
    ; ----------------------------------------------------------------------
    ; ----------------------------------------------------------------------
 
-   ; Default shucking tool, args as string and command as symbol
-   (define (butter-knife command . args)
-    (let ((all (cons (symbol->string command) args)))
-     (lines->list
-       (cdr (shell-command (string-join all #\space) #t)))))
+   ; Default shucking tool, simply transform the
+   ; string into an array of lines
+   (define (butter-knife command str)
+     (lines->list str))
+
+   (define (make-call command args)
+     (let ((all (cons
+                  (symbol->string command)
+                  (map (lambda (e)
+                         (string-append "\"" e "\""))
+                       args))))
+       (string-join all #\space)))
+
+   (define (lime command . args)
+     (cdr (shell-command (make-call command args) #t)))
 
    (define default-knife butter-knife)
 
-   (define (shuck command . args)
-    (apply (table-ref shucking-knifes command default-knife) command args))
+   (define default-seasonner lime)
+
+   (define (shuck command str)
+    ((table-ref shucking-knifes command default-knife) command str))
+
+   (define (prepare command . args)
+    (apply (table-ref seasonners command default-seasonner) command args))
+
+   (define (eat command . args)
+    (shuck command (apply prepare command args)))
 
    (define (cold-bath command)
-    (lambda args (apply shuck (cons command args))))
+    (lambda args (apply eat command args)))
 
    (define (edible? sym)
     (table-ref oysters sym #f))
@@ -122,6 +155,39 @@
       (table-set! oysters (string->symbol prog) #t))
      (directory-files path)))
 
+  (define (dive body)
+    (if (not (pair? body))
+        (if (edible? body)
+            (list 'cold-bath (macro-sym-to-rt-sym body))
+            body)
+        (let ((head (car body))
+              (rest (cdr body)))
+          (cond ((eq? head '->>) ; don't touch the rest
+                 body)
+                ((edible? head)
+                 (cons 'eat (cons (macro-sym-to-rt-sym head) (map dive rest))))
+                (else
+                 (cons head (map dive rest))))
+          )))
+
+   (define (do-pipe sym command)
+     (cdr (shell-command command #t)))
+
+   (table-set! seasonners 'OYSTER#PIPE do-pipe)
+
+   (define (pipe functions)
+    (let* ((calls (map (lambda (pair)
+                       (let ((command (car pair))
+                             (args (cdr pair)))
+                          (make-call command args)
+                        )) functions))
+          (last (caar (reverse functions)))
+          (pipe-command (string-join calls #\|))
+          )
+      ; pipe-command
+      `(shuck ,(macro-sym-to-rt-sym last) (prepare 'OYSTER#PIPE ,pipe-command))
+      ))
+
    ; ----------------------------------------------------------------------
    ; ----------------------------------------------------------------------
    ;                            Exported Macros
@@ -129,45 +195,12 @@
    ; ----------------------------------------------------------------------
 
    (define-macro
-    (define-shell signature body)
-    ; (export edible?)
-    ; Find a way to get the edible? call working...
-    ; Macros are not always fun
-    (letrec ((dive
-               (lambda (body)
-                 (if (not (pair? body))
-                     (if (oyster#edible? body)
-                         (list 'cold-bath `(string->symbol ,(symbol->string body)))
-                         body)
-                     (let ((head (car body))
-                           (rest (cdr body)))
-                       (if (oyster#edible? head)
-                           (cons 'shuck (cons `(string->symbol ,(symbol->string head)) (map dive rest)))
-                           (cons head (map dive rest))))
-                     ))))
-      `(define
-         ,signature
-         ,(dive body)
-         )))
+     (define-shell signature body)
+     `(define ,signature ,(oyster#dive body)))
 
-   ; Replace a knife for a lexical block
-   ; (define-macro (with-knife command knife thunk)
-   ;  (let ((r (gensym)))
-   ;    `(let ((shucking-knifes (table-set! ,command ,knife)))
-   ;       ,thunk)
-   ;    )
-   ;  )
-
-
-   ; ; Replace a list of knife for a lexical block
-   ; (define-macro (with-knifes commands knifes thunk)
-   ;  `(let* (,@(map (lambda (p)
-   ;                   (let ((name (car p))
-   ;                         (knife (cdr p)))
-   ;                     `(shucking-knifes (table-set! shucking-knifes ,name ,knife))))
-   ;                 (zip commands knifes)))
-   ;        ,thunk
-   ;        ))
+   (define-macro
+    (->> . functions)
+     (oyster#pipe functions))
 
    ; Load the config file at the end, so it can
    ; access all of the previously defined routines
