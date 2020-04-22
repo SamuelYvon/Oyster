@@ -7,8 +7,8 @@
           (oyster-core))
   (export
     ->>
-    with-shell
     define-shell
+    with-shell
     )
   (begin
 
@@ -27,9 +27,4 @@
      (import oyster-core)
      `(begin
         ,@(map oyster-core#dive thunks)))
-
-   ; Load the config file at the end, so it can
-   ; access all of the previously defined routines
-   ; including the core functions
-   (include "~/.oyster.scm")
-  ))
+))

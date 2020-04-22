@@ -166,7 +166,7 @@
                 ((edible? head)
                  (cons 'oyster-core#eat (cons (macro-sym-to-rt-sym head) (map dive rest))))
                 (else
-                 (cons head (map dive rest))))
+                  (cons head (map dive rest))))
           )))
 
    (define (do-pipe sym command)
@@ -176,13 +176,19 @@
 
    (define (pipe functions)
     (let* ((calls (map (lambda (pair)
-                       (let ((command (car pair))
+                       (let ((command (symbol->string (car pair)))
                              (args (cdr pair)))
                           (make-call command args)
                         )) functions))
           (last (caar (reverse functions)))
+          (last-args (cdar (reverse functions)))
           (pipe-command (string-join calls #\|)))
-      ; pipe-command
-      `(oyster-core#shuck ,(macro-sym-to-rt-sym last) (prepare 'OYSTER#PIPE ,pipe-command))
+      `(oyster-core#shuck ,(macro-sym-to-rt-sym last) (quote ,last-args) (oyster-core#prepare 'OYSTER#PIPE ,pipe-command))
       ))
+
+
+   ; Load the config file at the end, so it can
+   ; access all of the previously defined routines
+   ; including the core functions
+   (include "~/.oyster.scm")
   ))
