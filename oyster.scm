@@ -9,6 +9,7 @@
     ->>
     define-shell
     with-shell
+    partial
     )
   (begin
 
@@ -27,4 +28,8 @@
      (import oyster-core)
      `(begin
         ,@(map oyster-core#dive thunks)))
+
+   (define (partial f args)
+    (lambda more-args
+     (f (append args more-args))))
 ))
