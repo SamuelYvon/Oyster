@@ -29,7 +29,7 @@
      `(begin
         ,@(map oyster-core#dive thunks)))
 
-   (define (partial f args)
+   (define (partial f . args)
     (lambda more-args
      (f (append args more-args))))
 ))
