@@ -2,7 +2,7 @@
 
 > An extensible Scheme library to execute Scheme as a Shell script
 
-#### Version Alpha 0.0.2
+#### Version Alpha 0.0.3
 
 __ATTENTION__ Since this is in Alpha, the API might change from version to version!
 
@@ -121,6 +121,17 @@ One can define a specific shucking knife  for a function (for `ls in this case) 
 ```
 
 The `knife` function receives the command symbol, the args the function was called with and the result string. The result of the knife is used directly as the return argument of the call.
+
+
+### Aliases
+
+You can set aliases for function to add parameters by default and create other function names. To do this, you can either have an alias setup in your config or in the file you're running.
+
+```Scheme
+(define (alias what to . args) ...)
+```
+
+`what` and `to` are symbols that map `what -> to`. Args is a variadic argument that takes in the list of arguments you want to add to the function call (may be empty). All calls to `what` result in a call to `to` with the args added. It will append `args` to the called arguments.
 
 ## Getting Started
 
