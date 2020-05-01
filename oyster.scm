@@ -10,6 +10,7 @@
     define-shell
     with-shell
     partial
+    with-sudo
     )
   (begin
 
@@ -32,4 +33,11 @@
    (define (partial f . args)
     (lambda more-args
      (f (append args more-args))))
+
+   (define-macro (with-sudo . thunks)
+     (import oyster-core)
+     (let ((_ (gensym)))
+       `(let ((,_ (shell-command "sudo ls -al >> /dev/null")))
+          ,@thunks
+        )))
 ))

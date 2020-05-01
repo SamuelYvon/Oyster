@@ -106,6 +106,11 @@ The `with-shell` function executes a block of code with shell expansion without 
 
 `(with-shell thunks)`
 
+### `with-sudo`
+
+`with-sudo` asks for super user access. It takes a list of thunks to be executed, with the result of the expression being the last statement. This functions does not enter
+a "shell" mode and so you will need to use either inside a `define-shell` or use commands inside a `with-shell`.
+
 ### Shucking-knifes
 
 Analysing the result of a command and transforming it into a Scheme result is called `shucking`. You can define `shuking-knifes`, functions responsible for parsing the result, in your `~/oyster.scm` config file. By default, shucking is done with the `butter-knife`, which only transform lines into an array of strings.
