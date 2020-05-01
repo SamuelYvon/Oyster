@@ -188,7 +188,7 @@
 
    (table-set! seasonners 'OYSTER#PIPE do-pipe)
 
-   (define (pipe functions)
+   (define (pipe-calls . functions)
      (let* ((calls (map (lambda (pair)
                           (let ((command (symbol->string (car pair)))
                                 (args (cdr pair)))
@@ -197,8 +197,14 @@
             (last (caar (reverse functions)))
             (last-args (cdar (reverse functions)))
             (pipe-command (string-join calls #\|)))
-       `(oyster-core#shuck ,(macro-sym-to-rt-sym last) (quote ,last-args) (oyster-core#prepare 'OYSTER#PIPE ,pipe-command))
+       (oyster-core#shuck (macro-sym-to-rt-sym last) (quote last-args) (oyster-core#prepare 'OYSTER#PIPE pipe-command))
        ))
+
+   (define (pipe functions)
+     (let* ((calls (map (lambda (pair)
+                          (cons 'list (cons `(string->symbol ,(macro-sym-to-rt-sym (car pair))) (cdr pair)))
+                          ) functions)))
+       `(oyster-core#pipe-calls ,@calls)))
 
    (define (alias-replace to args)
     (lambda (command other-args c)
