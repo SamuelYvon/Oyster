@@ -2,7 +2,7 @@
 
 > An extensible Scheme library to execute Scheme as a Shell script
 
-#### Version Alpha 0.0.3
+#### Version Alpha 0.0.4
 
 __ATTENTION__ Since this is in Alpha, the API might change from version to version!
 
