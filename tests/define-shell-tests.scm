@@ -8,7 +8,14 @@
  (let ((s TEST-STRING))
    (echo s)))
 
+(oyster#define-shell
+ (test-ls-length)
+ (length (ls)))
 
 (let ((first-test (car (test-echo))))
   (import (_test))
   (check-true (string=? first-test TEST-STRING)))
+
+(let ((length-test (test-ls-length)))
+  (import (_test))
+  (check-true (> length-test 0)))
