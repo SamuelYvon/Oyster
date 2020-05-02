@@ -1,4 +1,7 @@
 language: generic
-before_install:
-  - ./install-gambit.sh
-script: ./gambit/gsi/gsi tests/define-shell-tests.scm
+os: osx
+addons:
+  homebew:
+    packages:
+    - gambit-scheme
+script: ./run-tests.sh
