@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e 
+set -e
 
 echo "------------------------------------"
 echo "------------------------------------"
@@ -11,5 +11,5 @@ echo "------------------------------------"
 for f in $( ls ./tests )
 do
     echo "Running file $f"
-    /usr/local/Gambit/bin/gsi "./tests/$f"
+    "$( whereis gsi | awk '{print $2}')" "./tests/$f"
 done
