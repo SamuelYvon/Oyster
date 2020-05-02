@@ -8,6 +8,8 @@ echo "            OYSTER TESTS            "
 echo "------------------------------------"
 echo "------------------------------------"
 
+echo "$( whereis gsi)"
+
 for f in $( ls ./tests )
 do
     echo "Running file $f"
