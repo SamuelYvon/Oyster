@@ -5,4 +5,4 @@ addons:
     packages:
     - gambit-scheme
     update: true
-script: ./run-tests.sh
+script: ./run-tests.sh travis
