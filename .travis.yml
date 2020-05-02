@@ -1,7 +1,8 @@
 language: generic
 os: osx
 addons:
-  homebew:
+  homebrew:
     packages:
     - gambit-scheme
+    update: true
 script: ./run-tests.sh
