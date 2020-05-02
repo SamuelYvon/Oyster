@@ -11,8 +11,4 @@
 
 (let ((first-test (car (test-echo))))
   (import (_test))
-  (check-true (string=? first-test TEST-STRING))
-
-  )
-
-
+  (check-true (string=? first-test TEST-STRING)))

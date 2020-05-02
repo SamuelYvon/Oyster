@@ -1,4 +1,5 @@
 language: generic
+os: osx
 before_install:
-  - sudo apt-get -y install gambc
+  - ./install-gambit.sh
 script: gsi tests/define-shell-tests.scm
