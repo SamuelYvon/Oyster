@@ -1,4 +1,4 @@
 language: generic
 before_install:
   - ./install-gambit.sh
-script: gsi tests/define-shell-tests.scm
+script: ./gambit/gsi/gsi tests/define-shell-tests.scm
