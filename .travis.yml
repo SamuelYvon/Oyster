@@ -1,3 +1,4 @@
 language: generic
 before_install:
   - sudo apt-get -y install gambc
+script: gsi tests/define-shell-tests.scm
