@@ -12,42 +12,45 @@
     partial
     with-sudo
     flags
+    version
     )
   (begin
 
-   (define-macro
-     (define-shell signature body)
-     (import oyster-core)
-     `(define ,signature ,(oyster-core#dive body)))
+    (define VERSION "0.0.5")
 
-   (define-macro
-     (->> . functions)
-     (import oyster-core)
-     (oyster-core#pipe functions))
+    (define-macro
+      (define-shell signature body)
+      (import oyster-core)
+      `(define ,signature ,(oyster-core#dive body)))
 
-   (define-macro
-     (with-shell . thunks)
-     (import oyster-core)
-     `(begin
-        ,@(map oyster-core#dive thunks)))
+    (define-macro
+      (->> . functions)
+      (import oyster-core)
+      (oyster-core#pipe functions))
 
-   (define (partial f . args)
-    (lambda more-args
-     (f (append args more-args))))
+    (define-macro
+      (with-shell . thunks)
+      (import oyster-core)
+      `(begin
+         ,@(map oyster-core#dive thunks)))
 
-   (define-macro (with-sudo . thunks)
-     (import oyster-core)
-     (let ((_ (gensym)))
-       `(let ((,_ (shell-command "sudo ls -al >> /dev/null")))
-          ,@thunks
-        )))
+    (define (partial f . args)
+      (lambda more-args
+        (f (append args more-args))))
 
-   ;; The flags macro takes a list of symbols, string that indicate flags
-   ;; or set of flags and transform them into a single flag string
-   (define-macro (flags . fflags)
-     (let ((as-strings (map (lambda (f)
-                             (if (symbol? f) (symbol->string f) f))
-                           fflags)))
-       (string-append "-" (fold-right string-append "" as-strings))))
+    (define-macro (with-sudo . thunks)
+      (import oyster-core)
+      (let ((_ (gensym)))
+        `(let ((,_ (shell-command "sudo ls -al >> /dev/null")))
+           ,@thunks
+           )))
 
-   ))
+    ;; The flags macro takes a list of symbols, string that indicate flags
+    ;; or set of flags and transform them into a single flag string
+    (define-macro (flags . fflags)
+      (let ((as-strings (map (lambda (f)
+                               (if (symbol? f) (symbol->string f) f))
+                             fflags)))
+        (string-append "-" (fold-right string-append "" as-strings))))
+
+    ))
