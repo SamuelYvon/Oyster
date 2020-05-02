@@ -1,5 +1,4 @@
 language: generic
-os: osx
 before_install:
   - ./install-gambit.sh
 script: gsi tests/define-shell-tests.scm
