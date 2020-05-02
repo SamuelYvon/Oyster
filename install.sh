@@ -10,7 +10,8 @@ if [[ "" == "$path" ]]; then
 fi
 
 
-cp "./oyster-core.scm" "$path"
-cp "./oyster.scm" "$path"
+cp -r ./src/ "$path"
+# cp "./oyster-core.scm" "$path"
+# cp "./oyster.scm" "$path"
 
 echo "Done :)"

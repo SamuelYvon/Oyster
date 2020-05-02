@@ -11,6 +11,7 @@
     with-shell
     partial
     with-sudo
+    flags
     )
   (begin
 
@@ -40,4 +41,13 @@
        `(let ((,_ (shell-command "sudo ls -al >> /dev/null")))
           ,@thunks
         )))
-))
+
+   ;; The flags macro takes a list of symbols, string that indicate flags
+   ;; or set of flags and transform them into a single flag string
+   (define-macro (flags . fflags)
+     (let ((as-strings (map (lambda (f)
+                             (if (symbol? f) (symbol->string f) f))
+                           fflags)))
+       (string-append "-" (fold-right string-append "" as-strings))))
+
+   ))
