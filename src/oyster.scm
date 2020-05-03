@@ -41,8 +41,8 @@
     (define-macro (with-sudo . thunks)
       (import oyster-core)
       (let ((_ (gensym)))
-        `(let ((,_ (shell-command "sudo ls -al >> /dev/null")))
-           ,@thunks
+        `(let ((,_ (shell-command "sudo ls -al >> /dev/null"))) ;; Prepend this little trick to gain sudo access
+           ,@(map oyster-core#sudo-dive thunks)
            )))
 
     ;; The flags macro takes a list of symbols, string that indicate flags

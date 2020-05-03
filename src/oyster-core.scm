@@ -1,6 +1,11 @@
 ; Idea: the macro will replace function calls to incorrect functions (that would be Shell scripts)
-; The function can have shucks-knifes, that define how to call the command and how to export
+; The function can have shucking-knifes, that define how to call the command and how to export
 ; the result
+
+
+;; TODO
+;; Need to finish the sudo handler
+
 (define-library
   (oyster-core)
   (import (gambit))
@@ -21,7 +26,6 @@
    ;                               Global data
    ; ----------------------------------------------------------------------
    ; ----------------------------------------------------------------------
-   (define explored? #f)
 
    ; Table of handlers to function of the form
    ; symbol, string -> scheme data
@@ -44,7 +48,7 @@
    ; So calls to cd work transparently
    (define cd current-directory)
 
-   ; (define default-knife butter-knife)
+
    ; ----------------------------------------------------------------------
    ; ----------------------------------------------------------------------
    ;                                  Utils
@@ -150,10 +154,10 @@
          (assoc sym aliases)))
 
    (define (define-shuck-knife command knife)
-     (table-set! shucks-knifes command knife))
+     (table-set! shucking-knifes command knife))
 
    (define (undef-shuck-knife command)
-     (table-set! shucks-knifes command))
+     (table-set! shucking-knifes command))
 
    ; Add a path as a reef, a source of programs that can
    ; and should be translated to calls to shell
@@ -161,12 +165,31 @@
      (set! reefs (cons path reefs))
      (explore path))
 
-   ; Add all programs to the list
+   ; Add all programs to the list of programs that can be called
    (define (explore path)
      (for-each
        (lambda (prog)
          (table-set! oysters (string->symbol prog) #t))
        (directory-files path)))
+
+   ;; Perform dive, but on the first level only
+   ;; It transform callable shell functions into calls to sudo
+   (define (sudo-dive body)
+     (if (not (pair? body))
+         (if (edible? body)
+             (list 'oyster-core#cold-bath (cons `(string->symbol "OYSTER#SUDO") (macro-sym-to-rt-sym body)))
+             body)
+         (let ((head (car body))
+               (rest (cdr body)))
+           (cond ((eq? head '->>) ; don't touch the rest
+                  body)
+                 ((edible? head)
+                  (cons 'oyster-core#eat
+                        (cons
+                         `(string->symbol "OYSTER#SUDO")
+                         (cons (macro-sym-to-rt-sym head) rest))))
+                 (else
+                  (cons head rest))))))
 
    (define (dive body)
      (if (not (pair? body))
@@ -180,13 +203,27 @@
                  ((edible? head)
                   (cons 'oyster-core#eat (cons (macro-sym-to-rt-sym head) (map dive rest))))
                  (else
-                   (cons head (map dive rest))))
+                  (cons head (map dive rest))))
            )))
 
    (define (do-pipe sym command)
      (cdr (shell-command command #t)))
 
+   ;; Command with args is the command in a list with the args passed.
+   ;; Need to get the command, append sudo, and find the right seasonner for the command
+   (define (do-sudo sym . command-with-args)
+     (let ((command (car command-with-args))
+           (args (cdr command-with-args)))
+       (oyster-core#shuck
+        command ; already a string
+        args
+        (apply
+         oyster-core#prepare
+         (string-append "sudo " command)
+         args))))
+
    (table-set! seasonners 'OYSTER#PIPE do-pipe)
+   (table-set! seasonners 'OYSTER#SUDO do-sudo)
 
    (define (pipe-calls . functions)
      (let* ((calls (map (lambda (pair)
@@ -197,32 +234,40 @@
             (last (caar (reverse functions)))
             (last-args (cdar (reverse functions)))
             (pipe-command (string-join calls #\|)))
-       (oyster-core#shuck (macro-sym-to-rt-sym last) (quote last-args) (oyster-core#prepare 'OYSTER#PIPE pipe-command))
-       ))
+       (oyster-core#shuck
+        (macro-sym-to-rt-sym last)
+        (quote last-args)
+        (oyster-core#prepare 'OYSTER#PIPE pipe-command)
+        )))
 
    (define (pipe functions)
      (let* ((calls (map (lambda (pair)
                           (cons 'list (cons `(string->symbol ,(macro-sym-to-rt-sym (car pair))) (cdr pair)))
-                          ) functions)))
+                          )
+                        functions)))
        `(oyster-core#pipe-calls ,@calls)))
 
    (define (alias-replace to args)
-    (lambda (command other-args c)
-     (c (symbol->string to) (append args other-args))))
+     (lambda (command other-args c)
+       (c (symbol->string to) (append args other-args))))
 
    (define (alias-identity command other-args c)
      (c command other-args))
 
-   ; Create an alias
-   ; what: source symbol
-   ; to : target symbol (shell call)
-   ; args: list of args to include
+   ;; Create an alias
+   ;; what: source symbol
+   ;; to : target symbol (shell call)
+   ;; args: list of args to include
    (define (alias what to . args)
      (set! aliases (cons (cons what (alias-replace to args)) aliases)))
 
+   ;; Do not reprocess the output from sudo since it is a meta command
+   (define-shuck-knife 'OYSTER#SUDO
+     (lambda (sym shell-cmd result)
+       result))
 
-   ; Load the config file at the end, so it can
-   ; access all of the previously defined routines
-   ; including the core functions
+   ;; Load the config file at the end, so it can
+   ;; access all of the previously defined routines
+   ;; including the core functions
    (include "~/.oyster.scm")
    ))
