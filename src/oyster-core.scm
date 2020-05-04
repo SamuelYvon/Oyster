@@ -1,10 +1,6 @@
-; Idea: the macro will replace function calls to incorrect functions (that would be Shell scripts)
-; The function can have shucking-knifes, that define how to call the command and how to export
-; the result
-
-
-;; TODO
-;; Need to finish the sudo handler
+;; Idea: the macro will replace function calls to incorrect functions (that would be Shell scripts)
+;; The function can have shucking-knifes, that define how to call the command and how to export
+;; the result
 
 (define-library
   (oyster-core)
@@ -17,43 +13,47 @@
     edible?
     prepare
     shuck
-    define-shuck-knife ; define a handler for parsing commands
+    define-shuck-knife ;; define a handler for parsing commands
     alias
     )
   (begin
-   ; ----------------------------------------------------------------------
-   ; ----------------------------------------------------------------------
-   ;                               Global data
-   ; ----------------------------------------------------------------------
-   ; ----------------------------------------------------------------------
 
-   ; Table of handlers to function of the form
-   ; symbol, string -> scheme data
+   (define SUDO 'OYSTER#SUDO)
+   (define PIPE 'OYSTER#PIPE)
+
+   ;; ----------------------------------------------------------------------
+   ;; ----------------------------------------------------------------------
+   ;;                               Global data
+   ;; ----------------------------------------------------------------------
+   ;; ----------------------------------------------------------------------
+
+   ;; Table of handlers to function of the form
+   ;; symbol, string -> scheme data
    (define shucking-knifes (make-table))
 
-   ; Table of handler functions to prepare and execute a command call
-   ; A function is in the form of
-   ; symbol, strings -> string
+   ;; Table of handler functions to prepare and execute a command call
+   ;; A function is in the form of
+   ;; symbol, strings -> string
    (define seasonners (make-table))
 
-   ; List of directories where functions can be found
+   ;; List of directories where functions can be found
    (define reefs '())
 
-   ; List of functions that can be called
+   ;; List of functions that can be called
    (define oysters (make-table))
 
-   ; Assoc list of aliases
+   ;; Assoc list of aliases
    (define aliases '())
 
-   ; So calls to cd work transparently
+   ;; So calls to cd work transparently
    (define cd current-directory)
 
 
-   ; ----------------------------------------------------------------------
-   ; ----------------------------------------------------------------------
-   ;                                  Utils
-   ; ----------------------------------------------------------------------
-   ; ----------------------------------------------------------------------
+   ;; ----------------------------------------------------------------------
+   ;; ----------------------------------------------------------------------
+   ;;                                  Utils
+   ;; ----------------------------------------------------------------------
+   ;; ----------------------------------------------------------------------
    (define foldl fold)
    (define foldr fold-right)
 
@@ -63,7 +63,7 @@
                (zip (cdr left) (cdr right)))
          '()))
 
-   ; Join a list of 'strs' of string with the 'sep' character
+   ;; Join a list of 'strs' of string with the 'sep' character
    (define (string-join strs sep)
      (let ((sep (if (char? sep)
                     (string sep)
@@ -99,17 +99,17 @@
    (define (filter p l)
      (foldr (lambda (e r) (if (p e) (cons e r) r)) '() l))
 
-   (define (macro-sym-to-rt-sym sym)
-     (symbol->string sym))
+   (define (rt-sym sym)
+     `(string->symbol ,(symbol->string sym)))
 
-   ; ----------------------------------------------------------------------
-   ; ----------------------------------------------------------------------
-   ;                                  Core
-   ; ----------------------------------------------------------------------
-   ; ----------------------------------------------------------------------
+   ;; ----------------------------------------------------------------------
+   ;; ----------------------------------------------------------------------
+   ;;                                  Core
+   ;; ----------------------------------------------------------------------
+   ;; ----------------------------------------------------------------------
 
-   ; Default shucking tool, simply transform the
-   ; string into an array of lines
+   ;; Default shucking tool, simply transform the
+   ;; string into an array of lines
    (define (butter-knife command args str)
      (lines->list str))
 
@@ -159,13 +159,13 @@
    (define (undef-shuck-knife command)
      (table-set! shucking-knifes command))
 
-   ; Add a path as a reef, a source of programs that can
-   ; and should be translated to calls to shell
+   ;; Add a path as a reef, a source of programs that can
+   ;; and should be translated to calls to shell
    (define (add-reef path)
      (set! reefs (cons path reefs))
      (explore path))
 
-   ; Add all programs to the list of programs that can be called
+   ;; Add all programs to the list of programs that can be called
    (define (explore path)
      (for-each
        (lambda (prog)
@@ -177,33 +177,41 @@
    (define (sudo-dive body)
      (if (not (pair? body))
          (if (edible? body)
-             (list 'oyster-core#cold-bath (cons `(string->symbol "OYSTER#SUDO") (macro-sym-to-rt-sym body)))
+             (list 'oyster-core#cold-bath (cons (rt-sym SUDO) (symbol->string body)))
              body)
          (let ((head (car body))
                (rest (cdr body)))
-           (cond ((eq? head '->>) ; don't touch the rest
+           (cond ((eq? head '->>) ;; don't touch the rest
                   body)
                  ((edible? head)
                   (cons 'oyster-core#eat
                         (cons
-                         `(string->symbol "OYSTER#SUDO")
-                         (cons (macro-sym-to-rt-sym head) rest))))
+                         (rt-sym SUDO)
+                         (cons (symbol->string head) rest))))
                  (else
                   (cons head rest))))))
+
+   ;; Criterion to avoid diving into functions
+   ;; this should enable mix and matching macros even when not required
+   (define (can-dive? head-sym)
+     (not (eq? head-sym 'with-sudo))
+     )
 
    (define (dive body)
      (if (not (pair? body))
          (if (edible? body)
-             (list 'oyster-core#cold-bath (macro-sym-to-rt-sym body))
+             (list 'oyster-core#cold-bath (symbol->string body))
              body)
          (let ((head (car body))
                (rest (cdr body)))
-           (cond ((eq? head '->>) ; don't touch the rest
+           (cond ((eq? head '->>) ;; don't touch the rest
                   body)
                  ((edible? head)
-                  (cons 'oyster-core#eat (cons (macro-sym-to-rt-sym head) (map dive rest))))
+                  (cons 'oyster-core#eat (cons (symbol->string head) (map dive rest))))
+                 ((can-dive? head)
+                  (cons head (map dive rest)))
                  (else
-                  (cons head (map dive rest))))
+                  body))
            )))
 
    (define (do-pipe sym command)
@@ -215,15 +223,15 @@
      (let ((command (car command-with-args))
            (args (cdr command-with-args)))
        (oyster-core#shuck
-        command ; already a string
+        command ;; already a string
         args
         (apply
          oyster-core#prepare
          (string-append "sudo " command)
          args))))
 
-   (table-set! seasonners 'OYSTER#PIPE do-pipe)
-   (table-set! seasonners 'OYSTER#SUDO do-sudo)
+   (table-set! seasonners PIPE do-pipe)
+   (table-set! seasonners SUDO do-sudo)
 
    (define (pipe-calls . functions)
      (let* ((calls (map (lambda (pair)
@@ -235,15 +243,14 @@
             (last-args (cdar (reverse functions)))
             (pipe-command (string-join calls #\|)))
        (oyster-core#shuck
-        (macro-sym-to-rt-sym last)
+        (symbol->string last)
         (quote last-args)
         (oyster-core#prepare 'OYSTER#PIPE pipe-command)
         )))
 
    (define (pipe functions)
      (let* ((calls (map (lambda (pair)
-                          (cons 'list (cons `(string->symbol ,(macro-sym-to-rt-sym (car pair))) (cdr pair)))
-                          )
+                          (cons 'list (cons (rt-sym (car pair)) (cdr pair))))
                         functions)))
        `(oyster-core#pipe-calls ,@calls)))
 
@@ -262,7 +269,7 @@
      (set! aliases (cons (cons what (alias-replace to args)) aliases)))
 
    ;; Do not reprocess the output from sudo since it is a meta command
-   (define-shuck-knife 'OYSTER#SUDO
+   (define-shuck-knife SUDO
      (lambda (sym shell-cmd result)
        result))
 
