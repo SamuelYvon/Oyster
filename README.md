@@ -138,6 +138,10 @@ You can set aliases for function to add parameters by default and create other f
 
 `what` and `to` are symbols that map `what -> to`. Args is a variadic argument that takes in the list of arguments you want to add to the function call (may be empty). All calls to `what` result in a call to `to` with the args added. It will append `args` to the called arguments.
 
+### Supplying arguments
+
+Multiple ways of providing arguments are supported. If you use a symbol as an argument, it will be printed verbatim inside the command line generated. For instance `(with-shell (ls '-al))` yields `ls -al`. If you pass a string, for instance `(with-shell (ls "-al"))` the generated command will be `ls "-al"`, with quotation around the argument. This may not be desirable for all commands. For flags, you can use the flag macro which will correctly generate a flag set. For instance, `(with-shell (ls (flags a l))) = (with-shell (ls (flags al))) = (with-shell (ls (flags "al"))) = ...`.
+
 ## Getting Started
 
 Oyster is designed for [Gambit Scheme](https://github.com/gambit/gambit). Therefore, using Oyster

@@ -113,12 +113,18 @@
    (define (butter-knife command args str)
      (lines->list str))
 
+
+   ;; Convert an argument into a string
+   ;; This implements the logic of having a symbol converted as a litteral and
+   ;; a string converted to a quoted string
+   (define (arg->string var)
+     (if (symbol? var)
+         (symbol->string var)
+         (string-append "\"" var "\"")
+         ))
+
    (define (make-call command args)
-     (let ((all (cons
-                  command
-                  (map (lambda (e)
-                         (string-append "\"" e "\""))
-                       args))))
+     (let ((all (cons command (map arg->string args))))
        (string-join all #\space)))
 
    (define (lime command . args)

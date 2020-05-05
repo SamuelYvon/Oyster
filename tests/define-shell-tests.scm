@@ -12,6 +12,22 @@
  (test-ls-length)
  (length (ls)))
 
+(oyster#define-shell
+ (test-sym-arg)
+ (length (ls '..)))
+
+(oyster#define-shell
+ (ls-al-test)
+ (ls "-al"))
+
+(oyster#define-shell
+ (test-flags)
+ (ls (oyster#flags a l)))
+
+(oyster#define-shell
+ (test-litteral-flags)
+ (ls '-al))
+
 (let ((first-test (car (test-echo))))
   (import (_test))
   (check-true (string=? first-test TEST-STRING)))
@@ -20,3 +36,17 @@
   (import (_test))
   (check-true (> length-test 0)))
 
+(let ((sym-test (test-sym-arg)))
+  (import (_test))
+  (check-true (> sym-test 0)))
+
+(let ((ls-with-flags (test-flags))
+      (ls-without-flags (ls-al-test)))
+  (import (_test))
+  (check-true (equal? ls-with-flags ls-without-flags))
+  )
+
+(let ((ls-with-flags (test-litteral-flags))
+      (ls-without-flags (ls-al-test)))
+  (import (_test))
+  (check-true (equal? ls-with-flags ls-without-flags)))
